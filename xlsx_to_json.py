@@ -3,6 +3,11 @@ Created on Jun 26, 2017
 
 @author: Justin Veyna
 '''
+"""
+XLSX files taken from:
+https://taxfoundation.org/?s=State%20Individual%20Income%20Tax%20Rates%20and%20Brackets
+"""
+
 from openpyxl import load_workbook
 import SaveLoader as sl
 
@@ -33,9 +38,7 @@ def parse_sheet(sheet, d):
                 ret[state] = parse_state(sheet, i, d)
     return ret
         
-
 def parse_state(sheet, i, d):
-    print(i, end=",")
     state = d[get_val(sheet,1, i)]
     individual = parse_brackets(sheet, i, 2)
     joint = parse_brackets(sheet, i, 6)
@@ -51,18 +54,17 @@ def parse_brackets(sheet, row, col):
             break
         ret.append((bracket, percent))
         j+=1
-        if j>10:
+        if j>13:
             print(j)
     return ret
 
 if __name__ == '__main__':
     master_dict = dict()
-    d = STATE_DICT
+    d = STATE_DICT #relic
     for year in YEARS:
-        print(year)
         filename = BASE_FILE_NAME.format(year)
         wb = load_workbook(filename = filename)
         sheet = wb['Sheet1']
         master_dict[year] = parse_sheet(sheet, d)
-    print(master_dict)
+    print(repr(master_dict))
     sl.pickle_save(master_dict, MASTER_DICT_FILE)
