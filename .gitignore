@@ -1,3 +1,9 @@
+.project
+.pydevproject
+__pychache__
+*.pyc
+*.p
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
