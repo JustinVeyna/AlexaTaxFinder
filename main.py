@@ -81,13 +81,11 @@ def get_welcome_response():
 
     session_attributes = {}
     card_title = "Welcome"
-    speech_output = "Welcome to the Tax Finder. " \
-                    "Please tell me the year, state, filing status, and yearly income by saying, " \
-                    "2016, California, individual, 200,000"
+    speech_output = "Welcome to Tax Finder. " \
+                    "Please tell me what you are looking for."
     # If the user either does not reply to the welcome message or says something
     # that is not understood, they will be prompted again with this text.
-    reprompt_text = "Please tell me the year, state, filing status, and yearly income by saying, " \
-                    "2016, California, individual, 200,000"
+    reprompt_text = "Please tell me what you are looking for. Try saying Income tax rate for California"
     should_end_session = False
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, should_end_session))
@@ -102,8 +100,6 @@ def handle_session_end_request():
         card_title, speech_output, None, should_end_session))
 
 def tax_find(intent_request, session):
-    print(intent_request)
-    print(session)
     intent = intent_request["intent"]
     odd_states = ["Alaska", "Colorado", "Florida", "Illinois", "Indiana", "Michigan", "Nevada", "South Dakota", "Texas", "Washington", "Wyoming"]
     session_attributes = {}
@@ -122,11 +118,13 @@ def tax_find(intent_request, session):
         if bdd != None:
             return build_response(session_attributes, build_delegate_dialogue(intent_request, year, state, filing_status, income))
         else:
-            speech_output = "I am unsure of what you said. Please try again"
+            speech_output = "I am unsure of what you said. Please try again."
+            print("IMPORTANT! Failed to something:", [year, state, filing_status, income])
             return build_response(session_attributes, build_speechlet_response(
                 intent['name'], speech_output, reprompt_text, True))
     
     if state in odd_states:
+        print("IMPORTANT! State called:", state)
         speech_output = "I could not find the tax rate for this state."
     else:
         i = 0
@@ -169,7 +167,6 @@ def on_intent(intent_request, session):
     print("on_intent requestId=" + intent_request['requestId'] +
           ", sessionId=" + session['sessionId'])
 
-    intent = intent_request['intent']
     intent_name = intent_request['intent']['name']
 
     # Dispatch to your skill's intent handlers
