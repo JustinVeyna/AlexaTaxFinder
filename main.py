@@ -102,7 +102,10 @@ def handle_session_end_request():
 def tax_find(intent_request, session):
     intent = intent_request["intent"]
     odd_states = ["Alaska", "Colorado", "Florida", "Illinois", "Indiana", "Michigan", "Nevada", "South Dakota", "Texas", "Washington", "Wyoming"]
+    fed_based_states = ["colorado", "illinois", "indiana", "michigan"]
+    non_states = ["alaska", "florida", "nevada", "south dakota", "texas", "washington", "wyoming"]
     session_attributes = {}
+    should_end_session = True
     reprompt_text = None
     year = None
     state = None
@@ -110,8 +113,19 @@ def tax_find(intent_request, session):
     income = None
     try:
         year = int(intent["slots"]["Year"]["value"])
-        state = intent["slots"]["State"]["value"]
-        filing_status = FILING_TYPE_DICT[intent["slots"]["FilingStatus"]["value"]]
+        state = intent["slots"]["State"]["value"].lower()
+        
+        if state in non_states:
+            speech_output = "There is no income tax in "+state+"for the year "+str(year)+"."
+            return build_response(session_attributes, build_speechlet_response(
+                intent['name'], speech_output, reprompt_text, True))
+        elif state in fed_based_states:
+            fed_based_str = MASTER_DICT[year][state][u"individual"][0][1]+" "+MASTER_DICT[year][state][u"individual"][1][1]
+            speech_output = "The income tax rate is "+ fed_based_str +"."
+            return build_response(session_attributes, build_speechlet_response(
+                intent['name'], speech_output, reprompt_text, True))
+        
+        filing_status = FILING_TYPE_DICT[intent["slots"]["FilingStatus"]["value"]].lower()
         income = int(intent["slots"]["Income"]["value"])
     except KeyError:
         bdd = build_delegate_dialogue(intent_request, year, state, filing_status, income)
@@ -123,16 +137,12 @@ def tax_find(intent_request, session):
             return build_response(session_attributes, build_speechlet_response(
                 intent['name'], speech_output, reprompt_text, True))
     
-    if state in odd_states:
-        print("IMPORTANT! State called:", state)
-        speech_output = "I could not find the tax rate for this state."
-    else:
-        i = 0
-        while i < len(MASTER_DICT[year][state][filing_status]) and income > MASTER_DICT[year][state][filing_status][i][0]:
-            i+=1
-        tax = MASTER_DICT[year][state][filing_status][i-1][1]
-        speech_output = "The income tax is " + str(tax*100)+ " percent"
-    should_end_session = True
+    i = 0
+    while i < len(MASTER_DICT[year][state][filing_status]) and income > MASTER_DICT[year][state][filing_status][i][0]:
+        i+=1
+    tax = MASTER_DICT[year][state][filing_status][i-1][1]
+    speech_output = "The income tax is " + str(tax*100)+ " percent"
+    
 
     # Setting reprompt_text to None signifies that we do not want to reprompt
     # the user. If the user does not respond or says something that is not
